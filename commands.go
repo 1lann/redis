@@ -5,7 +5,7 @@ import (
 	"io"
 	"time"
 
-	"github.com/go-redis/redis/internal"
+	"github.com/1lann/redis/internal"
 )
 
 func readTimeout(timeout time.Duration) time.Duration {
@@ -213,6 +213,7 @@ type Cmdable interface {
 	Time() *TimeCmd
 	Eval(script string, keys []string, args ...interface{}) *Cmd
 	EvalSha(sha1 string, keys []string, args ...interface{}) *Cmd
+	BuildEvalSha(sha1 string, keys []string, args ...interface{}) *Cmd
 	ScriptExists(scripts ...string) *BoolSliceCmd
 	ScriptFlush() *StatusCmd
 	ScriptKill() *StatusCmd
@@ -1874,6 +1875,22 @@ func (c *cmdable) EvalSha(sha1 string, keys []string, args ...interface{}) *Cmd 
 	}
 	cmd := NewCmd(cmdArgs...)
 	c.process(cmd)
+	return cmd
+}
+
+func (c *cmdable) BuildEvalSha(sha1 string, keys []string, args ...interface{}) *Cmd {
+	cmdArgs := make([]interface{}, 3+len(keys)+len(args))
+	cmdArgs[0] = "evalsha"
+	cmdArgs[1] = sha1
+	cmdArgs[2] = len(keys)
+	for i, key := range keys {
+		cmdArgs[3+i] = key
+	}
+	pos := 3 + len(keys)
+	for i, arg := range args {
+		cmdArgs[pos+i] = arg
+	}
+	cmd := NewCmd(cmdArgs...)
 	return cmd
 }
 
